@@ -18,8 +18,9 @@ if not os.path.exists(REQ_FILE):
     pd.DataFrame(columns=[ 
         'Número Solicitação', 'Nome do Solicitante', 'Métier', 'Tipo', 'Descrição', 
         'Linha de Projeto', 'Produto Novo ou Previsto', 'Valor Total', 
-        'Caminho Orçamento', 'Comentários', 'Status'
+        'Caminho Orçamento', 'Comentários', 'Riscos', 'Status'
     ]).to_csv(REQ_FILE, index=False)
+
 
 if not os.path.exists(ALMOX_FILE):
     pd.DataFrame(columns=[ 
@@ -55,6 +56,7 @@ if aba == "Nova Solicitação de Requisição":
     valor = st.number_input("Valor Total", min_value=0.0, format="%.2f")
     orcamento = st.file_uploader("Anexar Orçamento", type=["pdf", "jpg", "png"])
     comentarios = st.text_area("Comentários")
+    riscos = st.text_area("Riscos envolvidos na não execução desta demanda")
 
     if st.button("Enviar Solicitação"):
         numero = gerar_numero()
@@ -77,6 +79,7 @@ if aba == "Nova Solicitação de Requisição":
             'Valor Total': valor,
             'Caminho Orçamento': caminho_arquivo,
             'Comentários': comentarios,
+            'Riscos': riscos,
             'Status': 'Aprovação de Solicitação'
         }])
 
@@ -161,18 +164,23 @@ elif aba == "Histórico (Acesso Restrito)":
                 st.session_state.df_requisicoes.to_csv(REQ_FILE, index=False)
                 st.success("Status atualizado com sucesso!")
 
-            st.subheader("Excluir Solicitação")
-            excluir_numero = st.text_input("Digite o número da solicitação para excluir", type="password")
-            if excluir_numero:
-                # Confirmar exclusão de solicitação
-                solicitacao = df[df['Número Solicitação'] == excluir_numero]
-                if not solicitacao.empty:
-                    if st.button(f"Excluir Solicitação {excluir_numero}"):
-                        # Excluir a solicitação
-                        st.session_state.df_requisicoes = st.session_state.df_requisicoes[st.session_state.df_requisicoes['Número Solicitação'] != excluir_numero]
-                        st.session_state.df_requisicoes.to_csv(REQ_FILE, index=False)
-                        st.success(f"Solicitação {excluir_numero} excluída com sucesso!")
-                else:
-                    st.error("Número de solicitação não encontrado.")
+        st.subheader("Excluir Solicitação")
+        excluir_numero = st.text_input("Digite o número da solicitação para excluir", type="password")
+        if excluir_numero:
+            solicitacao = df[df['Número Solicitação'] == excluir_numero]
+            if not solicitacao.empty:
+                if st.button(f"Excluir Solicitação {excluir_numero}"):
+                    st.session_state.df_requisicoes = st.session_state.df_requisicoes[
+                        st.session_state.df_requisicoes['Número Solicitação'] != excluir_numero
+                    ]
+                    st.session_state.df_requisicoes.to_csv(REQ_FILE, index=False)
+                    st.success(f"Solicitação {excluir_numero} excluída com sucesso!")
+            else:
+                st.error("Número de solicitação não encontrado.")
+
+        # Histórico do Almoxarifado
+        st.subheader("Histórico de Solicitações ao Almoxarifado")
+        st.dataframe(st.session_state.df_almox)
+
     elif senha != "":
         st.error("Senha incorreta.")
